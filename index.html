@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html>
+<head>
+
+  <title>IOT - signal visualizator</title>
+
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+  <link rel="shortcut icon" type="image/x-icon" href="docs/images/favicon.ico" />
+  <script src="https://unpkg.com/papaparse@5.3.0/papaparse.min.js"></script>
+  <!-- <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script> -->
+  <!-- <script src="https://cdnjs.cloudflare.com/ajax/libs/axios/0.19.0/axios.min.js"></script> -->
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.6.0/dist/leaflet.css" integrity="sha512-xwE/Az9zrjBIphAcBb3F6JVqxf46+CDLwfLMHloNu6KEQCAWi6HcDUbeOfBIptF7tcCzusKFjFw2yuvEpDL9wQ==" crossorigin=""/>
+  <script src="https://unpkg.com/leaflet@1.6.0/dist/leaflet.js" integrity="sha512-gZwIG9x3wUXg2hdXF6+rVkLF/0Vi9U8D2Ntg4Ga5I5BZpVkVxlJWbSQtXPSiUTtC0TjtGOmxa1AJPuV0CPthew==" crossorigin=""></script>
+
+  <style>
+    * { margin: 0; padding: 0; }
+  </style>
+</head>
+<body>
+
+  <div>
+    <input type="file" id="avatar" name="avatar" onchange='openFile(event)' accept="text/csv">
+    <div id="mapid" style="width:100%; height:100%; position:fixed"></div>
+  </div>
+
+<script>
+
+  var map = L.map('mapid', {
+    center: L.latLng(49.4100908, 14.6805764),
+    zoom: 14
+  })
+
+  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+      attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+  }).addTo(map)
+
+  function openFile (event) {
+    Papa.parse(event.target.files[0], {
+    	worker: true,
+      header: true,
+      dynamicTyping: true,
+    	step: function(row) {
+        if (row.data['TX Cnt'] && row.data[' Lat'] !== 360) {
+          addPoint(row.data)
+        }
+    	},
+    	complete: function() {
+    		console.log("All done!");
+    	}
+    })
+  }
+
+  function addPoint (i) {
+    var circle = L.circle([i[' Lat'], i[' Long']], {
+        color: getColor(i[' Rssi']),
+        opacity: getOpacity(i[' Rssi']),
+        radius: 5
+    }).addTo(map)
+    const content = JSON.stringify(i, null, 2)
+    circle.bindPopup(content)
+  }
+
+  function getColor(d) {
+    return d === 0 ? 'red' :
+           d > 0 && d >= -20 ? '#00ff00' :
+           d > -20 && d > -50 ? '#00aa00' :
+          '#008800'
+  }
+
+  function getOpacity(d) {
+    return d === 0 ? 0.5 :
+           d > 0 && d >= -20 ? 1 :
+           d > -20 && d > -50 ? 0.5 :
+           0.3
+  }
+
+    // .then(res => {
+    //   res.data.map(i => {
+    //     const link = `lineargraph.html?app_id=${i.app_id}&dev_id=${i.dev_id}`
+    //     const content = `
+    //       <h2>
+    //         ${i.app_id}: <a href="${link}"/>${i.dev_id}</a>
+    //       </h2>
+    //       <div>${i.description}</div>
+    //       <div>Data: <a href="${link}"/>ZDE</a></div>
+    //     `
+    //     L.marker([i.latitude, i.longitude]).addTo(map)
+    //       .bindPopup(content).openPopup()
+    //   })
+    // })
+    // .catch(err => alert(err))
+
+</script>
+
+</body>
+</html>
